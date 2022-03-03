@@ -1,0 +1,77 @@
+version: 2.1
+orbs:
+  docker: circleci/docker@2.0.2
+executors:
+  amd64:
+    machine:
+      image: ubuntu-2004:202111-02
+      docker_layer_caching: true
+    resource_class: medium
+    environment:
+      DOCKER_BUILDKIT: 1
+  arm64:
+    machine:
+      image: ubuntu-2004:202101-01
+      docker_layer_caching: true
+    resource_class: arm.medium
+    environment:
+      DOCKER_BUILDKIT: 1
+commands:
+  build:
+    parameters:
+      arch:
+        type: string
+      args:
+        type: string
+    steps:
+      - checkout
+      - docker/check
+      - docker/build:
+          image: kanap0nta/gocv
+          tag: '<< parameters.arch >>-4.5.5,<< parameters.arch >>-latest'
+          extra_build_args:  << parameters.args >>
+      - docker/push:
+          image: kanap0nta/gocv
+          tag: '<< parameters.arch >>-4.5.5,<< parameters.arch >>-latest'
+jobs:
+  build_amd64:
+    executor: amd64
+    steps:
+      - build:
+          arch: amd64
+          args: '--progress=plain --build-arg IS_AMD64=1 --build-arg VARIANT=1 --build-arg NODE_VERSION=none'
+  build_arm64:
+    executor: arm64
+    steps:
+      - build:
+          arch: arm64
+          args: '--progress=plain --build-arg VARIANT=1 --build-arg NODE_VERSION=none'
+  deploy:
+    executor: amd64
+    steps:
+      - docker/check
+      - run:
+          name: "Create manifest"
+          command: |
+            docker manifest create kanap0nta/gocv:latest \
+              --amend kanap0nta/gocv:amd64-latest \
+              --amend kanap0nta/gocv:amd64-4.5.5 \
+              --amend kanap0nta/gocv:arm64-latest \
+              --amend kanap0nta/gocv:arm64-4.5.5
+      - run:
+          name: "Push manifest"
+          command: docker manifest push kanap0nta/gocv:latest
+
+workflows:
+  version: 2
+  build_and_deploy:
+    jobs:
+      - build_amd64:
+          context: docker-hub-creds
+      - build_arm64:
+          context: docker-hub-creds
+      - deploy:
+          context: docker-hub-creds          
+          requires:
+            - build_amd64
+            - build_arm64
