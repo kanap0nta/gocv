@@ -55,16 +55,15 @@ WORKDIR /tmp
 # Add tools
 
 RUN apt-get update \
-  && apt-get -y install --no-install-recommends bash-completion v4l-utils gcc-mingw-w64 binutils-mingw-w64 g++-mingw-w64 gcc-${CROSS_CPU2}-linux-gnu g++-${CROSS_CPU2}-linux-gnu make unzip wget build-essential cmake curl git pkg-config \
+  && apt-get -y install --no-install-recommends v4l-utils gcc-mingw-w64 binutils-mingw-w64 g++-mingw-w64 gcc-${CROSS_CPU2}-linux-gnu g++-${CROSS_CPU2}-linux-gnu make unzip wget build-essential cmake curl git pkg-config \
   && update-alternatives --set i686-w64-mingw32-g++ /usr/bin/i686-w64-mingw32-g++-posix \
   && update-alternatives --set i686-w64-mingw32-gcc /usr/bin/i686-w64-mingw32-gcc-posix \
   && update-alternatives --set x86_64-w64-mingw32-g++ /usr/bin/x86_64-w64-mingw32-g++-posix \
-  && update-alternatives --set x86_64-w64-mingw32-gcc /usr/bin/x86_64-w64-mingw32-gcc-posix \
-  && sed -i -e "35,41s:^#::" /etc/bash.bashrc
+  && update-alternatives --set x86_64-w64-mingw32-gcc /usr/bin/x86_64-w64-mingw32-gcc-posix
 
 # Add gocv
 
-ENV GOCV_VERSION=0.29.0
+ENV GOCV_VERSION=0.30.0
 ENV GOCV_URL=https://github.com/hybridgroup/gocv/archive/refs/tags/v${GOCV_VERSION}.zip
 ENV OPENCV_VERSION=4.5.5
 ENV OPENCV_URL=https://github.com/opencv/opencv/archive/${OPENCV_VERSION}.zip
@@ -231,3 +230,4 @@ RUN go clean --cache \
 	&& go run -tags customenv ./cmd/version/main.go
 
 WORKDIR /tmp
+RUN rm -rf opencv

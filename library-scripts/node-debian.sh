@@ -1,20 +1,23 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #-------------------------------------------------------------------------------------------------------------
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT License. See https://go.microsoft.com/fwlink/?linkid=2090316 for license information.
 #-------------------------------------------------------------------------------------------------------------
 #
-# Docs: https://github.com/microsoft/vscode-dev-containers/blob/main/script-library/docs/node.md
+# Docs: https://github.com/microsoft/vscode-dev-containers/blob/main/script-library/docs/go.md
 # Maintainer: The VS Code and Codespaces Teams
 #
-# Syntax: ./node-debian.sh [directory to install nvm] [node version to install (use "none" to skip)] [non-root user] [Update rc files flag] [install node-gyp deps]
+# Syntax: ./go-debian.sh [Go version] [GOROOT] [GOPATH] [non-root user] [Add GOPATH, GOROOT to rc files flag] [Install tools flag]
 
-export NVM_DIR=${1:-"/usr/local/share/nvm"}
-export NODE_VERSION=${2:-"lts"}
-USERNAME=${3:-"automatic"}
-UPDATE_RC=${4:-"true"}
-INSTALL_TOOLS_FOR_NODE_GYP="${5:-true}"
-export NVM_VERSION="0.38.0"
+TARGET_GO_VERSION=${1:-"latest"}
+TARGET_GOROOT=${2:-"/usr/local/go"}
+TARGET_GOPATH=${3:-"/go"}
+USERNAME=${4:-"automatic"}
+UPDATE_RC=${5:-"true"}
+INSTALL_GO_TOOLS=${6:-"true"}
+
+# https://www.google.com/linuxrepositories/
+GO_GPG_KEY_URI="https://dl.google.com/linux/linux_signing_key.pub"
 
 set -e
 
@@ -56,6 +59,54 @@ updaterc() {
         fi
     fi
 }
+# Figure out correct version of a three part version number is not passed
+find_version_from_git_tags() {
+    local variable_name=$1
+    local requested_version=${!variable_name}
+    if [ "${requested_version}" = "none" ]; then return; fi
+    local repository=$2
+    local prefix=${3:-"tags/v"}
+    local separator=${4:-"."}
+    local last_part_optional=${5:-"false"}    
+    if [ "$(echo "${requested_version}" | grep -o "." | wc -l)" != "2" ]; then
+        local escaped_separator=${separator//./\\.}
+        local last_part
+        if [ "${last_part_optional}" = "true" ]; then
+            last_part="(${escaped_separator}[0-9]+)?"
+        else
+            last_part="${escaped_separator}[0-9]+"
+        fi
+        local regex="${prefix}\\K[0-9]+${escaped_separator}[0-9]+${last_part}$"
+        local version_list="$(git ls-remote --tags ${repository} | grep -oP "${regex}" | tr -d ' ' | tr "${separator}" "." | sort -rV)"
+        if [ "${requested_version}" = "latest" ] || [ "${requested_version}" = "current" ] || [ "${requested_version}" = "lts" ]; then
+            declare -g ${variable_name}="$(echo "${version_list}" | head -n 1)"
+        else
+            set +e
+            declare -g ${variable_name}="$(echo "${version_list}" | grep -E -m 1 "^${requested_version//./\\.}([\\.\\s]|$)")"
+            set -e
+        fi
+    fi
+    if [ -z "${!variable_name}" ] || ! echo "${version_list}" | grep "^${!variable_name//./\\.}$" > /dev/null 2>&1; then
+        echo -e "Invalid ${variable_name} value: ${requested_version}\nValid values:\n${version_list}" >&2
+        exit 1
+    fi
+    echo "${variable_name}=${!variable_name}"
+}
+
+# Get central common setting
+get_common_setting() {
+    if [ "${common_settings_file_loaded}" != "true" ]; then
+        curl -sfL "https://aka.ms/vscode-dev-containers/script-library/settings.env" 2>/dev/null -o /tmp/vsdc-settings.env || echo "Could not download settings file. Skipping."
+        common_settings_file_loaded=true
+    fi
+    if [ -f "/tmp/vsdc-settings.env" ]; then
+        local multi_line=""
+        if [ "$2" = "true" ]; then multi_line="-z"; fi
+        local result="$(grep ${multi_line} -oP "$1=\"?\K[^\"]+" /tmp/vsdc-settings.env | tr -d '\0')"
+        if [ ! -z "${result}" ]; then declare -g $1="${result}"; fi
+    fi
+    echo "$1=${!1}"
+}
 
 # Function to run apt-get if needed
 apt_get_update_if_needed()
@@ -76,94 +127,121 @@ check_packages() {
     fi
 }
 
-# Ensure apt is in non-interactive to avoid prompts
 export DEBIAN_FRONTEND=noninteractive
 
-# Install dependencies
-check_packages apt-transport-https curl ca-certificates tar gnupg2 dirmngr
-
-# Install yarn
-if type yarn > /dev/null 2>&1; then
-    echo "Yarn already installed."
-else
-    # Import key safely (new method rather than deprecated apt-key approach) and install
-    curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | gpg --dearmor > /usr/share/keyrings/yarn-archive-keyring.gpg
-    echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/yarn-archive-keyring.gpg] https://dl.yarnpkg.com/debian/ stable main" > /etc/apt/sources.list.d/yarn.list
-    apt-get update
-    apt-get -y install --no-install-recommends yarn
+# Install curl, tar, git, other dependencies if missing
+check_packages curl ca-certificates gnupg2 tar g++ gcc libc6-dev make pkg-config
+if ! type git > /dev/null 2>&1; then
+    apt_get_update_if_needed
+    apt-get -y install --no-install-recommends git
 fi
 
-# Adjust node version if required
-if [ "${NODE_VERSION}" = "none" ]; then
-    export NODE_VERSION=
-elif [ "${NODE_VERSION}" = "lts" ]; then
-    export NODE_VERSION="lts/*"
-fi
+# Get closest match for version number specified
+find_version_from_git_tags TARGET_GO_VERSION "https://go.googlesource.com/go" "tags/go" "." "true"
 
-# Create a symlink to the installed version for use in Dockerfile PATH statements
-export NVM_SYMLINK_CURRENT=true
+architecture="$(uname -m)"
+case $architecture in
+    x86_64) architecture="amd64";;
+    aarch64 | armv8*) architecture="arm64";;
+    aarch32 | armv7* | armvhf*) architecture="armv6l";;
+    i?86) architecture="386";;
+    *) echo "(!) Architecture $architecture unsupported"; exit 1 ;;
+esac
 
-# Install the specified node version if NVM directory already exists, then exit
-if [ -d "${NVM_DIR}" ]; then
-    echo "NVM already installed."
-    if [ "${NODE_VERSION}" != "" ]; then
-       su ${USERNAME} -c ". $NVM_DIR/nvm.sh && nvm install ${NODE_VERSION} && nvm clear-cache"
-    fi
-    exit 0
-fi
-
-# Create nvm group, nvm dir, and set sticky bit
-if ! cat /etc/group | grep -e "^nvm:" > /dev/null 2>&1; then
-    groupadd -r nvm
-fi
+# Install Go
 umask 0002
-usermod -a -G nvm ${USERNAME}
-mkdir -p ${NVM_DIR}
-chown :nvm ${NVM_DIR}
-chmod g+s ${NVM_DIR}
-su ${USERNAME} -c "$(cat << EOF
+if ! cat /etc/group | grep -e "^golang:" > /dev/null 2>&1; then
+    groupadd -r golang
+fi
+usermod -a -G golang "${USERNAME}"
+mkdir -p "${TARGET_GOROOT}" "${TARGET_GOPATH}" 
+if [ "${TARGET_GO_VERSION}" != "none" ] && ! type go > /dev/null 2>&1; then
+    # Use a temporary locaiton for gpg keys to avoid polluting image
+    export GNUPGHOME="/tmp/tmp-gnupg"
+    mkdir -p ${GNUPGHOME}
+    chmod 700 ${GNUPGHOME}
+    get_common_setting GO_GPG_KEY_URI
+    curl -sSL -o /tmp/tmp-gnupg/golang_key "${GO_GPG_KEY_URI}"
+    gpg -q --import /tmp/tmp-gnupg/golang_key
+    echo "Downloading Go ${TARGET_GO_VERSION}..."
+    set +e
+    curl -fsSL -o /tmp/go.tar.gz "https://golang.org/dl/go${TARGET_GO_VERSION}.linux-${architecture}.tar.gz"
+    exit_code=$?
     set -e
-    umask 0002
-    # Do not update profile - we'll do this manually
-    export PROFILE=/dev/null
-    curl -so- https://raw.githubusercontent.com/nvm-sh/nvm/v${NVM_VERSION}/install.sh | bash 
-    source ${NVM_DIR}/nvm.sh
-    if [ "${NODE_VERSION}" != "" ]; then
-        nvm alias default ${NODE_VERSION}
+    if [ "$exit_code" != "0" ]; then
+        echo "(!) Download failed."
+        # Try one break fix version number less if we get a failure
+        major="$(echo "${TARGET_GO_VERSION}" | grep -oE '^[0-9]+' || echo '')"
+        minor="$(echo "${TARGET_GO_VERSION}" | grep -oP '^[0-9]+\.\K[0-9]+' || echo '')"
+        breakfix="$(echo "${TARGET_GO_VERSION}" | grep -oP '^[0-9]+\.[0-9]+\.\K[0-9]+' 2>/dev/null || echo '')"
+        if [ "${breakfix}" = "" ] || [ "${breakfix}" = "0" ]; then
+            ((minor=minor-1))
+            TARGET_GO_VERSION="${major}.${minor}"
+            find_version_from_git_tags TARGET_GO_VERSION "https://go.googlesource.com/go" "tags/go" "." "true"
+        else 
+            ((breakfix=breakfix-1))
+           TARGET_GO_VERSION="${major}.${minor}.${breakfix}"
+        fi
+        echo "Trying ${TARGET_GO_VERSION}..."
+        curl -fsSL -o /tmp/go.tar.gz "https://golang.org/dl/go${TARGET_GO_VERSION}.linux-${architecture}.tar.gz"
     fi
-    nvm clear-cache 
-EOF
-)" 2>&1
-# Update rc files
-if [ "${UPDATE_RC}" = "true" ]; then
-updaterc "$(cat <<EOF
-export NVM_DIR="${NVM_DIR}"
-[ -s "\$NVM_DIR/nvm.sh" ] && . "\$NVM_DIR/nvm.sh"
-[ -s "\$NVM_DIR/bash_completion" ] && . "\$NVM_DIR/bash_completion"
+    curl -fsSL -o /tmp/go.tar.gz.asc "https://golang.org/dl/go${TARGET_GO_VERSION}.linux-${architecture}.tar.gz.asc"
+    gpg --verify /tmp/go.tar.gz.asc /tmp/go.tar.gz
+    echo "Extracting Go ${TARGET_GO_VERSION}..."
+    tar -xzf /tmp/go.tar.gz -C "${TARGET_GOROOT}" --strip-components=1
+    rm -rf /tmp/go.tar.gz /tmp/go.tar.gz.asc /tmp/tmp-gnupg
+else
+    echo "Go already installed. Skipping."
+fi
+
+# Install Go tools that are isImportant && !replacedByGopls based on
+# https://github.com/golang/vscode-go/blob/v0.31.1/src/goToolsInformation.ts
+GO_TOOLS="\
+    golang.org/x/tools/gopls@latest \
+    honnef.co/go/tools/cmd/staticcheck@master \
+    golang.org/x/lint/golint@latest \
+    github.com/mgechev/revive@latest \
+    github.com/uudashr/gopkgs/v2/cmd/gopkgs@latest \
+    github.com/ramya-rao-a/go-outline@latest \
+    github.com/go-delve/delve/cmd/dlv@latest \
+    github.com/golangci/golangci-lint/cmd/golangci-lint@latest"
+if [ "${INSTALL_GO_TOOLS}" = "true" ]; then
+    echo "Installing common Go tools..."
+    export PATH=${TARGET_GOROOT}/bin:${PATH}
+    mkdir -p /tmp/gotools /usr/local/etc/vscode-dev-containers ${TARGET_GOPATH}/bin
+    cd /tmp/gotools
+    export GOPATH=/tmp/gotools
+    export GOCACHE=/tmp/gotools/cache
+
+    # Use go get for versions of go under 1.16
+    go_install_command=install
+    if [[ "1.16" > "$(go version | grep -oP 'go\K[0-9]+\.[0-9]+(\.[0-9]+)?')" ]]; then
+        export GO111MODULE=on
+        go_install_command=get
+        echo "Go version < 1.16, using go get."
+    fi 
+
+    (echo "${GO_TOOLS}" | xargs -n 1 go ${go_install_command} -v )2>&1 | tee -a /usr/local/etc/vscode-dev-containers/go.log
+
+    # Move Go tools into path and clean up
+    mv /tmp/gotools/bin/* ${TARGET_GOPATH}/bin/
+
+    rm -rf /tmp/gotools
+fi
+
+# Add GOPATH variable and bin directory into PATH in bashrc/zshrc files (unless disabled)
+updaterc "$(cat << EOF
+export GOPATH="${TARGET_GOPATH}"
+if [[ "\${PATH}" != *"\${GOPATH}/bin"* ]]; then export PATH="\${PATH}:\${GOPATH}/bin"; fi
+export GOROOT="${TARGET_GOROOT}"
+if [[ "\${PATH}" != *"\${GOROOT}/bin"* ]]; then export PATH="\${PATH}:\${GOROOT}/bin"; fi
 EOF
 )"
-fi
 
-# If enabled, verify "python3", "make", "gcc", "g++" commands are available so node-gyp works - https://github.com/nodejs/node-gyp
-if [ "${INSTALL_TOOLS_FOR_NODE_GYP}" = "true" ]; then
-    echo "Verifying node-gyp OS requirements..."
-    to_install=""
-    if ! type make > /dev/null 2>&1; then
-        to_install="${to_install} make"
-    fi
-    if ! type gcc > /dev/null 2>&1; then
-        to_install="${to_install} gcc"
-    fi
-    if ! type g++ > /dev/null 2>&1; then
-        to_install="${to_install} g++"
-    fi
-    if ! type python3 > /dev/null 2>&1; then
-        to_install="${to_install} python3-minimal"
-    fi
-    if [ ! -z "${to_install}" ]; then
-        apt_get_update_if_needed
-        apt-get -y install ${to_install}
-    fi
-fi
+chown -R :golang "${TARGET_GOROOT}" "${TARGET_GOPATH}"
+chmod -R g+r+w "${TARGET_GOROOT}" "${TARGET_GOPATH}"
+find "${TARGET_GOROOT}" -type d | xargs -n 1 chmod g+s
+find "${TARGET_GOPATH}" -type d | xargs -n 1 chmod g+s
 
 echo "Done!"
+
