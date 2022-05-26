@@ -1,5 +1,5 @@
 // For format details, see https://aka.ms/devcontainer.json. For config options, see the README at:
-// https://github.com/microsoft/vscode-dev-containers/tree/v0.229.0/containers/go
+// https://github.com/microsoft/vscode-dev-containers/tree/v0.231.6/containers/go
 {
 	"name": "Go",
 	"build": {
@@ -7,7 +7,7 @@
 		"args": {
 			// Uncomment when building on amd64
 			// "IS_AMD64": "1",
-			"VARIANT": "1",
+			"VARIANT": "1-bullseye",
 			// Options
 			"NODE_VERSION": "none"
 		}
@@ -24,8 +24,6 @@
 	// Add the IDs of extensions you want installed when the container is created.
 	"extensions": [
 		"golang.Go",
-		"zxh404.vscode-proto3",
-		"xaver.clang-format"
 	],
 
 	// "mounts": [],
