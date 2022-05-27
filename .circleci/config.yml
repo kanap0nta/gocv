@@ -6,7 +6,7 @@ executors:
     machine:
       image: ubuntu-2004:202111-02
       docker_layer_caching: true
-    resource_class: medium
+    resource_class: large
     environment:
       DOCKER_BUILDKIT: 1
   arm64:
@@ -71,7 +71,7 @@ workflows:
       - build_arm64:
           context: docker-hub-creds
       - deploy:
-          context: docker-hub-creds          
+          context: docker-hub-creds
           requires:
             - build_amd64
             - build_arm64

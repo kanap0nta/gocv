@@ -154,41 +154,41 @@ RUN printf "set(CMAKE_SYSTEM_NAME Windows)\nset(CMAKE_C_COMPILER   /usr/bin/x86_
 #   && make install \
 #   && mkdir /usr/x86_64-w64-mingw32/pkgconfig \
 #   && cp unix-install/opencv4.pc /usr/x86_64-w64-mingw32/pkgconfig/opencv4.pc
-# # Cross build
-# WORKDIR /tmp/opencv/opencv-${OPENCV_VERSION}/build_${CROSS_CPU1}
-# ENV PKG_CONFIG_PATH=/usr/lib/${CROSS_CPU1}-linux-gnu/pkgconfig:/usr/${CROSS_CPU1}-linux-gnu/lib/pkgconfig
-# ENV LD_LIBRARY_PATH=/usr/lib/${CROSS_CPU1}-linux-gnu/:/usr/${CROSS_CPU1}-linux-gnu/lib
-# ENV CGO_CPPFLAGS=-I/usr/${CROSS_CPU1}-linux-gnu/include/opencv4\ -I/usr/${CROSS_CPU1}-linux-gnu/include
-# ENV CGO_LDFLAGS=-L/usr/${CROSS_CPU1}-linux-gnu/lib\ -L/usr/${CROSS_CPU1}-linux-gnu/lib/opencv4/3rdparty\ -lopencv_gapi\ -lopencv_highgui\ -lopencv_ml\ -lopencv_objdetect\ -lopencv_photo\ -lopencv_stitching\ -lopencv_video\ -lopencv_calib3d\ -lopencv_features2d\ -lopencv_dnn\ -lopencv_flann\ -lopencv_videoio\ -lopencv_imgcodecs\ -lopencv_imgproc\ -lopencv_core\ -llibprotobuf\ -lade\ -ltbb\ -llibjpeg-turbo\ -llibwebp\ -llibpng\ -llibtiff\ -llibopenjp2\ -lIlmImf\ -lzlib\ -ldl\ -lm\ -lpthread\ -lrt
-# RUN rm -rf ./* \
-#   && cmake -D CMAKE_TOOLCHAIN_FILE=../${CROSS_CPU1}.cmake \
-#           -D CMAKE_BUILD_TYPE=RELEASE \
-#           -D CMAKE_INSTALL_PREFIX=/usr/${CROSS_CPU1}-linux-gnu \
-#           -D BUILD_SHARED_LIBS=OFF \
-#           -D BUILD_DOCS=OFF \
-#           -D BUILD_EXAMPLES=OFF \
-#           -D BUILD_TESTS=OFF \
-#           -D BUILD_PERF_TESTS=OFF \
-#           -D BUILD_opencv_java=NO \
-#           -D BUILD_opencv_python=NO \
-#           -D BUILD_opencv_python2=NO \
-#           -D BUILD_opencv_python3=NO \
-#           -D WITH_TBB=ON \
-#           -D WITH_QT=OFF \
-#           -D WITH_GTK=OFF \
-#           -D WITH_CAROTENE=OFF \
-#           -D WITH_CUDA=OFF \
-#           -D WITH_CUDNN=OFF \
-#           -D WITH_OPENNI=OFF \
-#           -D WITH_ITT=OFF \
-#           -D WITH_QUIRC=OFF \
-#           -D WITH_IPP=OFF \
-#           -D OPENCV_FORCE_3RDPARTY_BUILD=ON \
-#           -D OPENCV_GENERATE_PKGCONFIG=ON \
-#           .. \
-#   && make -j "$(nproc --all --ignore=1)" \
-#   && make preinstall \
-#   && make install
+# Cross build
+WORKDIR /tmp/opencv/opencv-${OPENCV_VERSION}/build_${CROSS_CPU1}
+ENV PKG_CONFIG_PATH=/usr/lib/${CROSS_CPU1}-linux-gnu/pkgconfig:/usr/${CROSS_CPU1}-linux-gnu/lib/pkgconfig
+ENV LD_LIBRARY_PATH=/usr/lib/${CROSS_CPU1}-linux-gnu/:/usr/${CROSS_CPU1}-linux-gnu/lib
+ENV CGO_CPPFLAGS=-I/usr/${CROSS_CPU1}-linux-gnu/include/opencv4\ -I/usr/${CROSS_CPU1}-linux-gnu/include
+ENV CGO_LDFLAGS=-L/usr/${CROSS_CPU1}-linux-gnu/lib\ -L/usr/${CROSS_CPU1}-linux-gnu/lib/opencv4/3rdparty\ -lopencv_gapi\ -lopencv_highgui\ -lopencv_ml\ -lopencv_objdetect\ -lopencv_photo\ -lopencv_stitching\ -lopencv_video\ -lopencv_calib3d\ -lopencv_features2d\ -lopencv_dnn\ -lopencv_flann\ -lopencv_videoio\ -lopencv_imgcodecs\ -lopencv_imgproc\ -lopencv_core\ -llibprotobuf\ -lade\ -ltbb\ -llibjpeg-turbo\ -llibwebp\ -llibpng\ -llibtiff\ -llibopenjp2\ -lIlmImf\ -lzlib\ -ldl\ -lm\ -lpthread\ -lrt
+RUN rm -rf ./* \
+  && cmake -D CMAKE_TOOLCHAIN_FILE=../${CROSS_CPU1}.cmake \
+          -D CMAKE_BUILD_TYPE=RELEASE \
+          -D CMAKE_INSTALL_PREFIX=/usr/${CROSS_CPU1}-linux-gnu \
+          -D BUILD_SHARED_LIBS=OFF \
+          -D BUILD_DOCS=OFF \
+          -D BUILD_EXAMPLES=OFF \
+          -D BUILD_TESTS=OFF \
+          -D BUILD_PERF_TESTS=OFF \
+          -D BUILD_opencv_java=NO \
+          -D BUILD_opencv_python=NO \
+          -D BUILD_opencv_python2=NO \
+          -D BUILD_opencv_python3=NO \
+          -D WITH_TBB=ON \
+          -D WITH_QT=OFF \
+          -D WITH_GTK=OFF \
+          -D WITH_CAROTENE=OFF \
+          -D WITH_CUDA=OFF \
+          -D WITH_CUDNN=OFF \
+          -D WITH_OPENNI=OFF \
+          -D WITH_ITT=OFF \
+          -D WITH_QUIRC=OFF \
+          -D WITH_IPP=OFF \
+          -D OPENCV_FORCE_3RDPARTY_BUILD=ON \
+          -D OPENCV_GENERATE_PKGCONFIG=ON \
+          .. \
+  && make -j "$(nproc --all)" \
+  && make preinstall \
+  && make install
 # build
 WORKDIR /tmp/opencv/opencv-${OPENCV_VERSION}/build_${CPU2}
 ENV PKG_CONFIG_PATH=/usr/lib/pkgconfig:/usr/local/lib/pkgconfig:/usr/lib/${CPU2}-linux-gnu/pkgconfig:/usr/${CPU2}-linux-gnu/lib/pkgconfig
@@ -221,7 +221,7 @@ RUN rm -rf ./* \
           -D OPENCV_FORCE_3RDPARTY_BUILD=ON \
           -D OPENCV_GENERATE_PKGCONFIG=ON \
           .. \
-  && make -j "$(nproc --all --ignore=1)" \
+  && make -j "$(nproc --all)" \
   && make preinstall \
   && make install \
   && ldconfig
