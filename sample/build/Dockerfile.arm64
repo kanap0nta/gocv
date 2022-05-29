@@ -2,6 +2,10 @@ FROM kanap0nta/gocv:arm64-latest as build
 
 WORKDIR /app
 COPY . .
+ENV PKG_CONFIG_PATH=/usr/lib/aarch64-linux-gnu/pkgconfig:/usr/aarch64-linux-gnu/lib/pkgconfig
+ENV LD_LIBRARY_PATH=/usr/lib/aarch64-linux-gnu/:/usr/aarch64-linux-gnu/lib
+ENV CGO_CPPFLAGS=-I/usr/aarch64-linux-gnu/include/opencv4\ -I/usr/aarch64-linux-gnu/include
+ENV CGO_LDFLAGS=-L/usr/aarch64-linux-gnu/lib\ -L/usr/aarch64-linux-gnu/lib/opencv4/3rdparty\ -lopencv_gapi\ -lopencv_highgui\ -lopencv_ml\ -lopencv_objdetect\ -lopencv_photo\ -lopencv_stitching\ -lopencv_video\ -lopencv_calib3d\ -lopencv_features2d\ -lopencv_dnn\ -lopencv_flann\ -lopencv_videoio\ -lopencv_imgcodecs\ -lopencv_imgproc\ -lopencv_core\ -llibprotobuf\ -lade\ -ltbb\ -llibjpeg-turbo\ -llibwebp\ -llibpng\ -llibtiff\ -llibopenjp2\ -lIlmImf\ -lzlib\ -ldl\ -lm\ -lpthread\ -lrt
 RUN GOOS=linux GOARCH=arm64 CGO_ENABLED=1 CXX=/usr/bin/g++ CC=/usr/bin/gcc go build -tags customenv "-ldflags=-s -w -buildid=" -trimpath -o ./bin/captest ./cmd/captest/main.go
 
 
