@@ -39,7 +39,7 @@ jobs:
     steps:
       - build:
           arch: amd64
-          args: '--progress=plain --build-arg IS_AMD64=1 --build-arg VARIANT=1 --build-arg NODE_VERSION=none'
+          args: '--progress=plain --build-arg VARIANT=1 --build-arg NODE_VERSION=none'
   build_arm64:
     executor: arm64
     steps:
