@@ -28,11 +28,11 @@ commands:
       - docker/check
       - docker/build:
           image: kanap0nta/gocv
-          tag: '<< parameters.arch >>-4.5.5,<< parameters.arch >>-latest'
+          tag: '<< parameters.arch >>-4.6.0,<< parameters.arch >>-latest'
           extra_build_args:  << parameters.args >>
       - docker/push:
           image: kanap0nta/gocv
-          tag: '<< parameters.arch >>-4.5.5,<< parameters.arch >>-latest'
+          tag: '<< parameters.arch >>-4.6.0,<< parameters.arch >>-latest'
 jobs:
   build_amd64:
     executor: amd64
@@ -55,9 +55,9 @@ jobs:
           command: |
             docker manifest create kanap0nta/gocv:latest \
               --amend kanap0nta/gocv:amd64-latest \
-              --amend kanap0nta/gocv:amd64-4.5.5 \
+              --amend kanap0nta/gocv:amd64-4.6.0 \
               --amend kanap0nta/gocv:arm64-latest \
-              --amend kanap0nta/gocv:arm64-4.5.5
+              --amend kanap0nta/gocv:arm64-4.6.0
       - run:
           name: "Push manifest"
           command: docker manifest push kanap0nta/gocv:latest

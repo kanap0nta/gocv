@@ -36,9 +36,9 @@ RUN apt-get update \
 
 # Add gocv
 
-ENV GOCV_VERSION=0.30.0
+ENV GOCV_VERSION=0.31.0
 ENV GOCV_URL=https://github.com/hybridgroup/gocv/archive/refs/tags/v${GOCV_VERSION}.zip
-ENV OPENCV_VERSION=4.5.5
+ENV OPENCV_VERSION=4.6.0
 ENV OPENCV_URL=https://github.com/opencv/opencv/archive/${OPENCV_VERSION}.zip
 # export CGO_CPPFLAGS=`pkg-config --cflags opencv4`
 # export CGO_LDFLAGS=`pkg-config --libs opencv4`
