@@ -4,16 +4,16 @@ orbs:
 executors:
   amd64:
     machine:
-      image: ubuntu-2004:202111-02
+      image: ubuntu-2004:current
       docker_layer_caching: true
     resource_class: large
     environment:
       DOCKER_BUILDKIT: 1
   arm64:
     machine:
-      image: ubuntu-2004:202101-01
+      image: ubuntu-2004:current
       docker_layer_caching: true
-    resource_class: arm.medium
+    resource_class: arm.large
     environment:
       DOCKER_BUILDKIT: 1
 commands:
