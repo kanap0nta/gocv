@@ -1,12 +1,20 @@
 FROM kanap0nta/gocv:amd64-latest as build
 
 WORKDIR /app
+
+COPY go.mod .
+COPY go.sum .
+
+RUN go mod download \
+  && sed -i -e '6d' /go/pkg/mod/gocv.io/x/gocv\@v0.32.1/aruco.h
+
 COPY . .
+
 ENV PKG_CONFIG_PATH=/usr/lib/x86_64-linux-gnu/pkgconfig:/usr/x86_64-linux-gnu/lib/pkgconfig
 ENV LD_LIBRARY_PATH=/usr/lib/x86_64-linux-gnu/:/usr/x86_64-linux-gnu/lib
 ENV CGO_CPPFLAGS=-I/usr/x86_64-linux-gnu/include/opencv4\ -I/usr/x86_64-linux-gnu/include
 ENV CGO_LDFLAGS=-L/usr/x86_64-linux-gnu/lib\ -L/usr/x86_64-linux-gnu/lib/opencv4/3rdparty\ -lopencv_gapi\ -lopencv_highgui\ -lopencv_ml\ -lopencv_objdetect\ -lopencv_photo\ -lopencv_stitching\ -lopencv_video\ -lopencv_calib3d\ -lopencv_features2d\ -lopencv_dnn\ -lopencv_flann\ -lopencv_videoio\ -lopencv_imgcodecs\ -lopencv_imgproc\ -lopencv_core\ -llibprotobuf\ -lade\ -ltbb\ -llibjpeg-turbo\ -llibwebp\ -llibpng\ -llibtiff\ -llibopenjp2\ -lIlmImf\ -lzlib\ -ldl\ -lm\ -lpthread\ -lrt
-RUN GOOS=linux GOARCH=amd64 CGO_ENABLED=1 CXX=/usr/bin/g++ CC=/usr/bin/gcc go build "-ldflags=-s -w -buildid=" -trimpath -o ./bin/captest ./cmd/captest/main.go
+RUN GOOS=linux GOARCH=amd64 CGO_ENABLED=1 CXX=/usr/bin/g++ CC=/usr/bin/gcc go build -tags customenv "-ldflags=-s -w -buildid=" -trimpath -o ./bin/captest ./cmd/captest/main.go
 
 
 FROM debian:bullseye-slim

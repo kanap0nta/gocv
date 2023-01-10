@@ -1,7 +1,15 @@
 FROM kanap0nta/gocv:arm64-latest as build
 
 WORKDIR /app
+
+COPY go.mod .
+COPY go.sum .
+
+RUN go mod download \
+  && sed -i -e '6d' /go/pkg/mod/gocv.io/x/gocv\@v0.32.1/aruco.h
+
 COPY . .
+
 ENV PKG_CONFIG_PATH=/usr/lib/aarch64-linux-gnu/pkgconfig:/usr/aarch64-linux-gnu/lib/pkgconfig
 ENV LD_LIBRARY_PATH=/usr/lib/aarch64-linux-gnu/:/usr/aarch64-linux-gnu/lib
 ENV CGO_CPPFLAGS=-I/usr/aarch64-linux-gnu/include/opencv4\ -I/usr/aarch64-linux-gnu/include
