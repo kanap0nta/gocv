@@ -51,85 +51,85 @@ RUN curl -Lo opencv.zip $OPENCV_URL \
 WORKDIR /tmp/opencv/opencv-${OPENCV_VERSION}
 RUN printf "set(CMAKE_SYSTEM_NAME Linux)\nset(CMAKE_C_COMPILER   /usr/bin/aarch64-linux-gnu-gcc)\nset(CMAKE_CXX_COMPILER /usr/bin/aarch64-linux-gnu-g++)\nset(ENV{PKG_CONFIG_PATH} /usr/aarch64-linux-gnu/lib/pkgconfig)\nset(CMAKE_FIND_ROOT_PATH /usr/aarch64-linux-gnu/)\nset(CMAKE_CXX_STANDARD 17)\nset(CMAKE_CXX_STANDARD_REQUIRED ON)\nset(CMAKE_SYSTEM_PROCESSOR aarch64)" > aarch64.cmake \
   && printf "set(CMAKE_SYSTEM_NAME Linux)\nset(CMAKE_C_COMPILER   /usr/bin/x86_64-linux-gnu-gcc)\nset(CMAKE_CXX_COMPILER /usr/bin/x86_64-linux-gnu-g++)\nset(ENV{PKG_CONFIG_PATH} /usr/x86_64-linux-gnu/lib/pkgconfig)\nset(CMAKE_FIND_ROOT_PATH /usr/x86_64-linux-gnu/)\nset(CMAKE_CXX_STANDARD 17)\nset(CMAKE_CXX_STANDARD_REQUIRED ON)\nset(CMAKE_SYSTEM_PROCESSOR x86_64)" > x86_64.cmake \
-  # && printf "set(CMAKE_SYSTEM_NAME Windows)\nset(CMAKE_C_COMPILER   /usr/bin/x86_64-w64-mingw32-gcc)\nset(CMAKE_CXX_COMPILER /usr/bin/x86_64-w64-mingw32-g++)\nset(ENV{PKG_CONFIG_PATH} /usr/x86_64-w64-mingw32/lib/pkgconfig)\nset(CMAKE_FIND_ROOT_PATH /usr/x86_64-w64-mingw32/)\nset(CMAKE_CXX_STANDARD 17)\nset(CMAKE_CXX_STANDARD_REQUIRED ON)\nset(CMAKE_SYSTEM_PROCESSOR x86_64)\nset(CMAKE_CXX_FLAGS \"${CMAKE_CXX_FLAGS} -static\")" > x86_64_win.cmake \
-  # && printf "set(CMAKE_SYSTEM_NAME Windows)\nset(CMAKE_C_COMPILER   /usr/bin/i686-w64-mingw32-gcc)\nset(CMAKE_CXX_COMPILER /usr/bin/i686-w64-mingw32-g++)\nset(ENV{PKG_CONFIG_PATH} /usr/i686-w64-mingw32/lib/pkgconfig)\nset(CMAKE_FIND_ROOT_PATH /usr/i686-w64-mingw32/)\nset(CMAKE_CXX_STANDARD 17)\nset(CMAKE_CXX_STANDARD_REQUIRED ON)\nset(CMAKE_SYSTEM_PROCESSOR i686)\nset(CMAKE_CXX_FLAGS \"${CMAKE_CXX_FLAGS} -static\")" > i686_win.cmake \
+  && printf "set(CMAKE_SYSTEM_NAME Windows)\nset(CMAKE_C_COMPILER   /usr/bin/x86_64-w64-mingw32-gcc)\nset(CMAKE_CXX_COMPILER /usr/bin/x86_64-w64-mingw32-g++)\nset(ENV{PKG_CONFIG_PATH} /usr/x86_64-w64-mingw32/lib/pkgconfig)\nset(CMAKE_FIND_ROOT_PATH /usr/x86_64-w64-mingw32/)\nset(CMAKE_CXX_STANDARD 17)\nset(CMAKE_CXX_STANDARD_REQUIRED ON)\nset(CMAKE_SYSTEM_PROCESSOR x86_64)\nset(CMAKE_CXX_FLAGS \"${CMAKE_CXX_FLAGS} -static\")" > x86_64_win.cmake \
+  && printf "set(CMAKE_SYSTEM_NAME Windows)\nset(CMAKE_C_COMPILER   /usr/bin/i686-w64-mingw32-gcc)\nset(CMAKE_CXX_COMPILER /usr/bin/i686-w64-mingw32-g++)\nset(ENV{PKG_CONFIG_PATH} /usr/i686-w64-mingw32/lib/pkgconfig)\nset(CMAKE_FIND_ROOT_PATH /usr/i686-w64-mingw32/)\nset(CMAKE_CXX_STANDARD 17)\nset(CMAKE_CXX_STANDARD_REQUIRED ON)\nset(CMAKE_SYSTEM_PROCESSOR i686)\nset(CMAKE_CXX_FLAGS \"${CMAKE_CXX_FLAGS} -static\")" > i686_win.cmake \
   && sed -i -e 's/set(OPENCV_PC_LIBS_PRIVATE/list(APPEND OPENCV_PC_LIBS/g' cmake/OpenCVGenPkgconfig.cmake \
   && sed -i -e '130d' 3rdparty/libpng/pngpriv.h \
   && sed -i -e "130i #  if defined(PNG_ARM_NEON) && (defined(__ARM_NEON__) || defined(__ARM_NEON)) && \\\\" 3rdparty/libpng/pngpriv.h
-# # Win32 build
-# WORKDIR /tmp/opencv/opencv-${OPENCV_VERSION}/build_win32
-# RUN rm -rf ./* \
-#   && PKG_CONFIG_PATH=/usr/lib/i686-w64-mingw32/pkgconfig:/usr/i686-w64-mingw32/lib/pkgconfig \
-#   && LD_LIBRARY_PATH=/usr/lib/i686-w64-mingw32/:/usr/i686-w64-mingw32/lib \
-#   && CGO_CPPFLAGS=-I/usr/i686-w64-mingw32/include/opencv4\ -I/usr/i686-w64-mingw32/include \
-#   && CGO_LDFLAGS=-L/usr/i686-w64-mingw32/lib\ -L/usr/i686-w64-mingw32/lib/opencv4/3rdparty\ -lopencv_gapi470\ -lopencv_highgui470\ -lopencv_ml470\ -lopencv_objdetect470\ -lopencv_photo470\ -lopencv_stitching470\ -lopencv_video470\ -lopencv_calib3d470\ -lopencv_features2d470\ -lopencv_dnn470\ -lopencv_flann470\ -lopencv_videoio470\ -lopencv_imgcodecs470\ -lopencv_imgproc470\ -lopencv_core470\ -llibprotobuf\ -lade\ -llibjpeg-turbo\ -llibwebp\ -llibpng\ -llibtiff\ -llibopenjp2\ -lIlmImf\ -lzlib\ -lwsock32\ -lcomctl32\ -lgdi32\ -lole32\ -lsetupapi\ -lws2_32\ -lcomdlg32\ -loleaut32\ -luuid\ -lvfw32\ -static-libgcc\ -static-libstdc++\ -static \
-#   && cmake -D CMAKE_TOOLCHAIN_FILE=../i686_win.cmake \
-#           -D CMAKE_BUILD_TYPE=RELEASE \
-#           -D CMAKE_INSTALL_PREFIX=/usr/i686-w64-mingw32 \
-#           -D BUILD_SHARED_LIBS=OFF \
-#           -D BUILD_DOCS=OFF \
-#           -D BUILD_EXAMPLES=OFF \
-#           -D BUILD_TESTS=OFF \
-#           -D BUILD_PERF_TESTS=OFF \
-#           -D BUILD_opencv_java=NO \
-#           -D BUILD_opencv_python=NO \
-#           -D BUILD_opencv_python2=NO \
-#           -D BUILD_opencv_python3=NO \
-#           -D WITH_TBB=OFF \
-#           -D WITH_QT=OFF \
-#           -D WITH_GTK=OFF \
-#           -D WITH_CAROTENE=OFF \
-#           -D WITH_CUDA=OFF \
-#           -D WITH_CUDNN=OFF \
-#           -D WITH_OPENNI=OFF \
-#           -D WITH_ITT=OFF \
-#           -D WITH_QUIRC=OFF \
-#           -D WITH_DIRECTX=OFF \
-#           -D OPENCV_FORCE_3RDPARTY_BUILD=ON \
-#           -D OPENCV_GENERATE_PKGCONFIG=ON \
-#           .. \
-#   && make -j "$(nproc --all)" \
-#   && make preinstall \
-#   && make install \
-#   && mkdir /usr/i686-w64-mingw32/pkgconfig \
-#   && cp unix-install/opencv4.pc /usr/i686-w64-mingw32/pkgconfig/opencv4.pc
-# # Win64 build
-# WORKDIR /tmp/opencv/opencv-${OPENCV_VERSION}/build_win64
-# RUN rm -rf ./* \
-#   && PKG_CONFIG_PATH=/usr/lib/x86_64-w64-mingw32/pkgconfig:/usr/x86_64-w64-mingw32/lib/pkgconfig \
-#   && LD_LIBRARY_PATH=/usr/lib/x86_64-w64-mingw32/:/usr/x86_64-w64-mingw32/lib \
-#   && CGO_CPPFLAGS=-I/usr/x86_64-w64-mingw32/include/opencv4\ -I/usr/x86_64-w64-mingw32/include \
-#   && CGO_LDFLAGS=-L/usr/x86_64-w64-mingw32/lib\ -L/usr/x86_64-w64-mingw32/lib/opencv4/3rdparty\ -lopencv_gapi470\ -lopencv_highgui470\ -lopencv_ml470\ -lopencv_objdetect470\ -lopencv_photo470\ -lopencv_stitching470\ -lopencv_video470\ -lopencv_calib3d470\ -lopencv_features2d470\ -lopencv_dnn470\ -lopencv_flann470\ -lopencv_videoio470\ -lopencv_imgcodecs470\ -lopencv_imgproc470\ -lopencv_core470\ -llibprotobuf\ -lade\ -llibjpeg-turbo\ -llibwebp\ -llibpng\ -llibtiff\ -llibopenjp2\ -lIlmImf\ -lzlib\ -lwsock32\ -lcomctl32\ -lgdi32\ -lole32\ -lsetupapi\ -lws2_32\ -lcomdlg32\ -loleaut32\ -luuid\ -lvfw32\ -static-libgcc\ -static-libstdc++\ -static \
-#   && cmake -D CMAKE_TOOLCHAIN_FILE=../x86_64_win.cmake \
-#           -D CMAKE_BUILD_TYPE=RELEASE \
-#           -D CMAKE_INSTALL_PREFIX=/usr/x86_64-w64-mingw32 \
-#           -D BUILD_SHARED_LIBS=OFF \
-#           -D BUILD_DOCS=OFF \
-#           -D BUILD_EXAMPLES=OFF \
-#           -D BUILD_TESTS=OFF \
-#           -D BUILD_PERF_TESTS=OFF \
-#           -D BUILD_opencv_java=NO \
-#           -D BUILD_opencv_python=NO \
-#           -D BUILD_opencv_python2=NO \
-#           -D BUILD_opencv_python3=NO \
-#           -D WITH_TBB=OFF \
-#           -D WITH_QT=OFF \
-#           -D WITH_GTK=OFF \
-#           -D WITH_CAROTENE=OFF \
-#           -D WITH_CUDA=OFF \
-#           -D WITH_CUDNN=OFF \
-#           -D WITH_OPENNI=OFF \
-#           -D WITH_ITT=OFF \
-#           -D WITH_QUIRC=OFF \
-#           -D WITH_DIRECTX=OFF \
-#           -D OPENCV_FORCE_3RDPARTY_BUILD=ON \
-#           -D OPENCV_GENERATE_PKGCONFIG=ON \
-#           .. \
-#   && make -j "$(nproc --all)" \
-#   && make preinstall \
-#   && make install \
-#   && mkdir /usr/x86_64-w64-mingw32/pkgconfig \
-#   && cp unix-install/opencv4.pc /usr/x86_64-w64-mingw32/pkgconfig/opencv4.pc
+# Win32 build
+WORKDIR /tmp/opencv/opencv-${OPENCV_VERSION}/build_win32
+RUN rm -rf ./* \
+  && PKG_CONFIG_PATH=/usr/lib/i686-w64-mingw32/pkgconfig:/usr/i686-w64-mingw32/lib/pkgconfig \
+  && LD_LIBRARY_PATH=/usr/lib/i686-w64-mingw32/:/usr/i686-w64-mingw32/lib \
+  && CGO_CPPFLAGS=-I/usr/i686-w64-mingw32/include/opencv4\ -I/usr/i686-w64-mingw32/include \
+  && CGO_LDFLAGS=-L/usr/i686-w64-mingw32/lib\ -L/usr/i686-w64-mingw32/lib/opencv4/3rdparty\ -lopencv_gapi470\ -lopencv_highgui470\ -lopencv_ml470\ -lopencv_objdetect470\ -lopencv_photo470\ -lopencv_stitching470\ -lopencv_video470\ -lopencv_calib3d470\ -lopencv_features2d470\ -lopencv_dnn470\ -lopencv_flann470\ -lopencv_videoio470\ -lopencv_imgcodecs470\ -lopencv_imgproc470\ -lopencv_core470\ -llibprotobuf\ -lade\ -llibjpeg-turbo\ -llibwebp\ -llibpng\ -llibtiff\ -llibopenjp2\ -lIlmImf\ -lzlib\ -lwsock32\ -lcomctl32\ -lgdi32\ -lole32\ -lsetupapi\ -lws2_32\ -lcomdlg32\ -loleaut32\ -luuid\ -lvfw32\ -static-libgcc\ -static-libstdc++\ -static \
+  && cmake -D CMAKE_TOOLCHAIN_FILE=../i686_win.cmake \
+          -D CMAKE_BUILD_TYPE=RELEASE \
+          -D CMAKE_INSTALL_PREFIX=/usr/i686-w64-mingw32 \
+          -D BUILD_SHARED_LIBS=OFF \
+          -D BUILD_DOCS=OFF \
+          -D BUILD_EXAMPLES=OFF \
+          -D BUILD_TESTS=OFF \
+          -D BUILD_PERF_TESTS=OFF \
+          -D BUILD_opencv_java=NO \
+          -D BUILD_opencv_python=NO \
+          -D BUILD_opencv_python2=NO \
+          -D BUILD_opencv_python3=NO \
+          -D WITH_TBB=OFF \
+          -D WITH_QT=OFF \
+          -D WITH_GTK=OFF \
+          -D WITH_CAROTENE=OFF \
+          -D WITH_CUDA=OFF \
+          -D WITH_CUDNN=OFF \
+          -D WITH_OPENNI=OFF \
+          -D WITH_ITT=OFF \
+          -D WITH_QUIRC=OFF \
+          -D WITH_DIRECTX=OFF \
+          -D OPENCV_FORCE_3RDPARTY_BUILD=ON \
+          -D OPENCV_GENERATE_PKGCONFIG=ON \
+          .. \
+  && make -j "$(nproc --all)" \
+  && make preinstall \
+  && make install \
+  && mkdir /usr/i686-w64-mingw32/pkgconfig \
+  && cp unix-install/opencv4.pc /usr/i686-w64-mingw32/pkgconfig/opencv4.pc
+# Win64 build
+WORKDIR /tmp/opencv/opencv-${OPENCV_VERSION}/build_win64
+RUN rm -rf ./* \
+  && PKG_CONFIG_PATH=/usr/lib/x86_64-w64-mingw32/pkgconfig:/usr/x86_64-w64-mingw32/lib/pkgconfig \
+  && LD_LIBRARY_PATH=/usr/lib/x86_64-w64-mingw32/:/usr/x86_64-w64-mingw32/lib \
+  && CGO_CPPFLAGS=-I/usr/x86_64-w64-mingw32/include/opencv4\ -I/usr/x86_64-w64-mingw32/include \
+  && CGO_LDFLAGS=-L/usr/x86_64-w64-mingw32/lib\ -L/usr/x86_64-w64-mingw32/lib/opencv4/3rdparty\ -lopencv_gapi470\ -lopencv_highgui470\ -lopencv_ml470\ -lopencv_objdetect470\ -lopencv_photo470\ -lopencv_stitching470\ -lopencv_video470\ -lopencv_calib3d470\ -lopencv_features2d470\ -lopencv_dnn470\ -lopencv_flann470\ -lopencv_videoio470\ -lopencv_imgcodecs470\ -lopencv_imgproc470\ -lopencv_core470\ -llibprotobuf\ -lade\ -llibjpeg-turbo\ -llibwebp\ -llibpng\ -llibtiff\ -llibopenjp2\ -lIlmImf\ -lzlib\ -lwsock32\ -lcomctl32\ -lgdi32\ -lole32\ -lsetupapi\ -lws2_32\ -lcomdlg32\ -loleaut32\ -luuid\ -lvfw32\ -static-libgcc\ -static-libstdc++\ -static \
+  && cmake -D CMAKE_TOOLCHAIN_FILE=../x86_64_win.cmake \
+          -D CMAKE_BUILD_TYPE=RELEASE \
+          -D CMAKE_INSTALL_PREFIX=/usr/x86_64-w64-mingw32 \
+          -D BUILD_SHARED_LIBS=OFF \
+          -D BUILD_DOCS=OFF \
+          -D BUILD_EXAMPLES=OFF \
+          -D BUILD_TESTS=OFF \
+          -D BUILD_PERF_TESTS=OFF \
+          -D BUILD_opencv_java=NO \
+          -D BUILD_opencv_python=NO \
+          -D BUILD_opencv_python2=NO \
+          -D BUILD_opencv_python3=NO \
+          -D WITH_TBB=OFF \
+          -D WITH_QT=OFF \
+          -D WITH_GTK=OFF \
+          -D WITH_CAROTENE=OFF \
+          -D WITH_CUDA=OFF \
+          -D WITH_CUDNN=OFF \
+          -D WITH_OPENNI=OFF \
+          -D WITH_ITT=OFF \
+          -D WITH_QUIRC=OFF \
+          -D WITH_DIRECTX=OFF \
+          -D OPENCV_FORCE_3RDPARTY_BUILD=ON \
+          -D OPENCV_GENERATE_PKGCONFIG=ON \
+          .. \
+  && make -j "$(nproc --all)" \
+  && make preinstall \
+  && make install \
+  && mkdir /usr/x86_64-w64-mingw32/pkgconfig \
+  && cp unix-install/opencv4.pc /usr/x86_64-w64-mingw32/pkgconfig/opencv4.pc
 # Cross build
 WORKDIR /tmp/opencv/opencv-${OPENCV_VERSION}/build_cross
 RUN rm -rf ./* \
