@@ -22,11 +22,10 @@ RUN if [ "${NODE_VERSION}" != "none" ]; then su vscode -c "umask 0002 && . /usr/
 WORKDIR /tmp
 
 # Add tools
-
 RUN apt-get update \
   && ARCH=$(arch) \
   && if [ "$ARCH" = "aarch64" ]; then CROSS_GCC_PACKAGE=gcc-x86-64-linux-gnu\ g++-x86-64-linux-gnu; else CROSS_GCC_PACKAGE=gcc-aarch64-linux-gnu\ g++-aarch64-linux-gnu; fi \
-  && apt-get -y install --no-install-recommends v4l-utils make unzip wget build-essential cmake curl git pkg-config gcc-mingw-w64 binutils-mingw-w64 g++-mingw-w64 ${CROSS_GCC_PACKAGE} \
+  && apt-get -y install --no-install-recommends v4l-utils make unzip build-essential cmake curl git pkg-config gcc-mingw-w64 binutils-mingw-w64 g++-mingw-w64 ${CROSS_GCC_PACKAGE} \
   && update-alternatives --set i686-w64-mingw32-g++ /usr/bin/i686-w64-mingw32-g++-posix \
   && update-alternatives --set i686-w64-mingw32-gcc /usr/bin/i686-w64-mingw32-gcc-posix \
   && update-alternatives --set x86_64-w64-mingw32-g++ /usr/bin/x86_64-w64-mingw32-g++-posix \
@@ -35,7 +34,6 @@ RUN apt-get update \
   && rm -r /var/lib/apt/lists/*
 
 # Add gocv
-
 ENV GOCV_VERSION=0.32.1
 ENV GOCV_URL=https://github.com/hybridgroup/gocv/archive/refs/tags/v${GOCV_VERSION}.zip
 ENV OPENCV_VERSION=4.7.0
@@ -56,11 +54,12 @@ RUN printf "set(CMAKE_SYSTEM_NAME Linux)\nset(CMAKE_C_COMPILER   /usr/bin/aarch6
   && sed -i -e 's/set(OPENCV_PC_LIBS_PRIVATE/list(APPEND OPENCV_PC_LIBS/g' cmake/OpenCVGenPkgconfig.cmake \
   && sed -i -e '130d' 3rdparty/libpng/pngpriv.h \
   && sed -i -e "130i #  if defined(PNG_ARM_NEON) && (defined(__ARM_NEON__) || defined(__ARM_NEON)) && \\\\" 3rdparty/libpng/pngpriv.h
+
 # # Win32 build
 # WORKDIR /tmp/opencv/opencv-${OPENCV_VERSION}/build_win32
 # RUN rm -rf ./* \
-#   && PKG_CONFIG_PATH=/usr/lib/i686-w64-mingw32/pkgconfig:/usr/i686-w64-mingw32/lib/pkgconfig \
-#   && LD_LIBRARY_PATH=/usr/lib/i686-w64-mingw32/:/usr/i686-w64-mingw32/lib \
+#   && PKG_CONFIG_PATH=/usr/i686-w64-mingw32/lib/pkgconfig \
+#   && LD_LIBRARY_PATH=/usr/i686-w64-mingw32/lib \
 #   && CGO_CPPFLAGS=-I/usr/i686-w64-mingw32/include/opencv4\ -I/usr/i686-w64-mingw32/include \
 #   && CGO_LDFLAGS=-L/usr/i686-w64-mingw32/lib\ -L/usr/i686-w64-mingw32/lib/opencv4/3rdparty\ -lopencv_gapi470\ -lopencv_highgui470\ -lopencv_ml470\ -lopencv_objdetect470\ -lopencv_photo470\ -lopencv_stitching470\ -lopencv_video470\ -lopencv_calib3d470\ -lopencv_features2d470\ -lopencv_dnn470\ -lopencv_flann470\ -lopencv_videoio470\ -lopencv_imgcodecs470\ -lopencv_imgproc470\ -lopencv_core470\ -llibprotobuf\ -lade\ -llibjpeg-turbo\ -llibwebp\ -llibpng\ -llibtiff\ -llibopenjp2\ -lIlmImf\ -lzlib\ -lwsock32\ -lcomctl32\ -lgdi32\ -lole32\ -lsetupapi\ -lws2_32\ -lcomdlg32\ -loleaut32\ -luuid\ -lvfw32\ -static-libgcc\ -static-libstdc++\ -static \
 #   && cmake -D CMAKE_TOOLCHAIN_FILE=../i686_win.cmake \
@@ -93,11 +92,12 @@ RUN printf "set(CMAKE_SYSTEM_NAME Linux)\nset(CMAKE_C_COMPILER   /usr/bin/aarch6
 #   && make install \
 #   && mkdir /usr/i686-w64-mingw32/pkgconfig \
 #   && cp unix-install/opencv4.pc /usr/i686-w64-mingw32/pkgconfig/opencv4.pc
+
 # # Win64 build
 # WORKDIR /tmp/opencv/opencv-${OPENCV_VERSION}/build_win64
 # RUN rm -rf ./* \
-#   && PKG_CONFIG_PATH=/usr/lib/x86_64-w64-mingw32/pkgconfig:/usr/x86_64-w64-mingw32/lib/pkgconfig \
-#   && LD_LIBRARY_PATH=/usr/lib/x86_64-w64-mingw32/:/usr/x86_64-w64-mingw32/lib \
+#   && PKG_CONFIG_PATH=/usr/x86_64-w64-mingw32/lib/pkgconfig \
+#   && LD_LIBRARY_PATH=/usr/x86_64-w64-mingw32/lib \
 #   && CGO_CPPFLAGS=-I/usr/x86_64-w64-mingw32/include/opencv4\ -I/usr/x86_64-w64-mingw32/include \
 #   && CGO_LDFLAGS=-L/usr/x86_64-w64-mingw32/lib\ -L/usr/x86_64-w64-mingw32/lib/opencv4/3rdparty\ -lopencv_gapi470\ -lopencv_highgui470\ -lopencv_ml470\ -lopencv_objdetect470\ -lopencv_photo470\ -lopencv_stitching470\ -lopencv_video470\ -lopencv_calib3d470\ -lopencv_features2d470\ -lopencv_dnn470\ -lopencv_flann470\ -lopencv_videoio470\ -lopencv_imgcodecs470\ -lopencv_imgproc470\ -lopencv_core470\ -llibprotobuf\ -lade\ -llibjpeg-turbo\ -llibwebp\ -llibpng\ -llibtiff\ -llibopenjp2\ -lIlmImf\ -lzlib\ -lwsock32\ -lcomctl32\ -lgdi32\ -lole32\ -lsetupapi\ -lws2_32\ -lcomdlg32\ -loleaut32\ -luuid\ -lvfw32\ -static-libgcc\ -static-libstdc++\ -static \
 #   && cmake -D CMAKE_TOOLCHAIN_FILE=../x86_64_win.cmake \
@@ -127,9 +127,8 @@ RUN printf "set(CMAKE_SYSTEM_NAME Linux)\nset(CMAKE_C_COMPILER   /usr/bin/aarch6
 #           .. \
 #   && make -j "$(nproc --all)" \
 #   && make preinstall \
-#   && make install \
-#   && mkdir /usr/x86_64-w64-mingw32/pkgconfig \
-#   && cp unix-install/opencv4.pc /usr/x86_64-w64-mingw32/pkgconfig/opencv4.pc
+#   && make install
+
 # Cross build
 WORKDIR /tmp/opencv/opencv-${OPENCV_VERSION}/build_cross
 RUN rm -rf ./* \
@@ -167,6 +166,7 @@ RUN rm -rf ./* \
   && make -j "$(nproc --all)" \
   && make preinstall \
   && make install
+
 # build
 WORKDIR /tmp/opencv/opencv-${OPENCV_VERSION}/build
 RUN rm -rf ./* \
@@ -205,8 +205,9 @@ RUN rm -rf ./* \
   && make install \
   && ldconfig
 
-WORKDIR /tmp/gocv-${GOCV_VERSION}
-RUN printf "export PKG_CONFIG_PATH=/usr/lib/pkgconfig:/usr/local/lib/pkgconfig:/usr/lib/$(arch)-linux-gnu/pkgconfig:/usr/$(arch)-linux-gnu/lib/pkgconfig\n" >> ~/.zshrc \
+WORKDIR /tmp
+RUN rm -rf opencv* \
+  && printf "export PKG_CONFIG_PATH=/usr/lib/pkgconfig:/usr/local/lib/pkgconfig:/usr/lib/$(arch)-linux-gnu/pkgconfig:/usr/$(arch)-linux-gnu/lib/pkgconfig\n" >> ~/.zshrc \
   && printf "export LD_LIBRARY_PATH=/usr/lib:/usr/local/lib:/usr/lib/$(arch)-linux-gnu/:/usr/$(arch)-linux-gnu/lib\n" >> ~/.zshrc \
   && printf "export CGO_CPPFLAGS=-I/usr/$(arch)-linux-gnu/include/opencv4\ -I/usr/$(arch)-linux-gnu/include\n" >> ~/.zshrc \
   && printf "export CGO_LDFLAGS=-L/usr/$(arch)-linux-gnu/lib\ -L/usr/$(arch)-linux-gnu/lib/opencv4/3rdparty\ -lopencv_gapi\ -lopencv_highgui\ -lopencv_ml\ -lopencv_objdetect\ -lopencv_photo\ -lopencv_stitching\ -lopencv_video\ -lopencv_calib3d\ -lopencv_features2d\ -lopencv_dnn\ -lopencv_flann\ -lopencv_videoio\ -lopencv_imgcodecs\ -lopencv_imgproc\ -lopencv_core\ -llibprotobuf\ -lade\ -ltbb\ -llibjpeg-turbo\ -llibwebp\ -llibpng\ -llibtiff\ -llibopenjp2\ -lIlmImf\ -lzlib\ -ldl\ -lm\ -lpthread\ -lrt\n" >> ~/.zshrc \
@@ -214,10 +215,9 @@ RUN printf "export PKG_CONFIG_PATH=/usr/lib/pkgconfig:/usr/local/lib/pkgconfig:/
   && printf "export LD_LIBRARY_PATH=/usr/lib:/usr/local/lib:/usr/lib/$(arch)-linux-gnu/:/usr/$(arch)-linux-gnu/lib\n" >> ~/.bashrc \
   && printf "export CGO_CPPFLAGS=-I/usr/$(arch)-linux-gnu/include/opencv4\ -I/usr/$(arch)-linux-gnu/include\n" >> ~/.bashrc \
   && printf "export CGO_LDFLAGS=-L/usr/$(arch)-linux-gnu/lib\ -L/usr/$(arch)-linux-gnu/lib/opencv4/3rdparty\ -lopencv_gapi\ -lopencv_highgui\ -lopencv_ml\ -lopencv_objdetect\ -lopencv_photo\ -lopencv_stitching\ -lopencv_video\ -lopencv_calib3d\ -lopencv_features2d\ -lopencv_dnn\ -lopencv_flann\ -lopencv_videoio\ -lopencv_imgcodecs\ -lopencv_imgproc\ -lopencv_core\ -llibprotobuf\ -lade\ -ltbb\ -llibjpeg-turbo\ -llibwebp\ -llibpng\ -llibtiff\ -llibopenjp2\ -lIlmImf\ -lzlib\ -ldl\ -lm\ -lpthread\ -lrt\n" >> ~/.bashrc
-SHELL ["/bin/zsh", "-c"]
-RUN source ~/.zshrc \
+
+WORKDIR /tmp/gocv-${GOCV_VERSION}
+SHELL ["/bin/bash", "-c"]
+RUN source ~/.bashrc \
   && go clean --cache \
   && go run -tags customenv ./cmd/version/main.go
-
-WORKDIR /tmp
-RUN rm -rf opencv
